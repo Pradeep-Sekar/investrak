@@ -17,6 +17,9 @@ dev = [
     "mypy>=1.0.0"
 ]
 
+[project.scripts]
+investrak = "investrak.cli.main:cli"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
