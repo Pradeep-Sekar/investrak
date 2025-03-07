@@ -10,6 +10,7 @@ from uuid import UUID
 from investrak.core.models import Portfolio, InvestmentEntry, InvestmentType, Goal, GoalStatus
 from investrak.core.storage import JsonFileStorage, StorageError
 from investrak.core.analytics import PortfolioAnalytics
+from ..core.export import PortfolioExporter
 
 console = Console()
 storage = JsonFileStorage(Path.home() / ".investrak")
@@ -495,6 +496,36 @@ def take_snapshot(portfolio_id: str):
         return 0
     except ValueError as e:
         console.print(f"[red]Error:[/red] Invalid portfolio ID")
+        return 1
+
+@analytics.command(name="export")
+@click.argument("portfolio_id")
+@click.argument("format", type=click.Choice(['csv', 'pdf']))
+@click.argument("output_path")
+def export_analytics(portfolio_id: str, format: str, output_path: str):
+    """Export portfolio analytics to CSV or PDF format."""
+    try:
+        portfolio = storage.get_portfolio(UUID(portfolio_id))
+        if not portfolio:
+            console.print("[red]Error:[/red] Portfolio not found")
+            return 1
+
+        analytics = PortfolioAnalytics(storage)
+        exporter = PortfolioExporter(analytics)
+        
+        output_path = Path(output_path)
+        if format == 'csv':
+            exporter.export_csv(UUID(portfolio_id), output_path)
+        else:  # pdf
+            exporter.export_pdf(UUID(portfolio_id), output_path)
+        
+        console.print(f"[green]✓ Analytics exported to {output_path}[/green]")
+        return 0
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] Invalid portfolio ID")
+        return 1
+    except Exception as e:
+        console.print(f"[red]Error:[/red] Failed to export analytics: {str(e)}")
         return 1
 
 if __name__ == "__main__":
