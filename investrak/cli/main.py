@@ -5,7 +5,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from investrak.core.models import Portfolio, InvestmentEntry, InvestmentType
+from investrak.core.models import Portfolio, InvestmentEntry, InvestmentType, Goal, GoalStatus
 from investrak.core.storage import JsonFileStorage, StorageError
 
 console = Console()
@@ -228,6 +228,159 @@ def update_investment(investment_id: str, quantity: int | None, price: float | N
         console.print(f"[green]✓ Updated investment:[/green] {updated_investment.symbol}")
     except (StorageError, ValueError) as e:
         console.print(f"[red]Error updating investment:[/red] {str(e)}")
+
+@cli.group()
+def goals():
+    """Manage your financial goals."""
+    pass
+
+@goals.command(name="create")
+@click.argument("name")
+@click.argument("target-amount", type=float)
+@click.argument("target-date", type=click.DateTime(formats=["%Y-%m-%d"]))
+@click.option("--category", "-c", help="Goal category")
+@click.option("--description", "-d", help="Goal description")
+@click.option("--portfolio", "-p", help="Associated portfolio ID")
+def create_goal(name: str, target_amount: float, target_date: datetime, 
+                category: str | None, description: str | None, portfolio: str | None):
+    """Create a new financial goal."""
+    try:
+        if target_amount <= 0:
+            console.print("[red]Error:[/red] Target amount must be positive")
+            return 1
+
+        # Convert target_date to UTC if it's naive
+        if target_date.tzinfo is None:
+            target_date = target_date.replace(tzinfo=UTC)
+            
+        current_time = datetime.now(UTC)
+        if target_date <= current_time:  # Changed from < to <= for stricter validation
+            console.print("[red]Error:[/red] Target date must be in the future")
+            return 1
+
+        portfolio_id = None
+        if portfolio:
+            if not storage.get_portfolio(portfolio):
+                console.print("[red]Error:[/red] Portfolio not found")
+                return 1
+            portfolio_id = portfolio
+
+        goal = Goal(
+            name=name,
+            target_amount=target_amount,
+            target_date=target_date,
+            category=category,
+            description=description,
+            portfolio_id=portfolio_id
+        )
+        storage.save_goal(goal)
+        console.print(f"[green]✓ Created goal:[/green] {goal.name}")
+        return 0
+    except (StorageError, ValueError) as e:
+        console.print(f"[red]Error:[/red] {str(e)}")
+        return 1
+
+@goals.command(name="list")
+@click.option("--status", "-s", 
+              type=click.Choice(["in_progress", "completed", "on_hold"]),
+              help="Filter by status")
+def list_goals(status: str | None):
+    """List all financial goals."""
+    try:
+        goals = storage.list_goals()
+        if not goals:
+            console.print("No goals found")
+            return 0
+
+        table = Table(title="Financial Goals")
+        table.add_column("ID")
+        table.add_column("Name")
+        table.add_column("Target Amount")
+        table.add_column("Target Date")
+        table.add_column("Status")
+        table.add_column("Category")
+
+        for goal in goals:
+            if status and goal.status.value != status:
+                continue
+            table.add_row(
+                str(goal.id),
+                goal.name,
+                f"${goal.target_amount:,.2f}",
+                goal.target_date.strftime("%Y-%m-%d"),
+                goal.status.value,
+                goal.category or ""
+            )
+        
+        console.print(table)
+        return 0
+    except StorageError as e:
+        console.print(f"[red]Error:[/red] {str(e)}")
+        return 1
+
+@goals.command(name="update")
+@click.argument("goal-id")
+@click.option("--name", "-n", help="New goal name")
+@click.option("--target-amount", "-a", type=float, help="New target amount")
+@click.option("--target-date", "-d", 
+              type=click.DateTime(formats=["%Y-%m-%d"]),
+              help="New target date (YYYY-MM-DD)")
+@click.option("--category", "-c", help="New category")
+@click.option("--description", "-d", help="New description")
+@click.option("--status", "-s", 
+              type=click.Choice(["in_progress", "completed", "on_hold"]),
+              help="New status")
+def update_goal(goal_id: str, name: str | None, target_amount: float | None,
+                target_date: datetime | None, category: str | None,
+                description: str | None, status: str | None):
+    """Update an existing goal."""
+    try:
+        goal = storage.get_goal(goal_id)
+        if not goal:
+            console.print("[red]Error:[/red] Goal not found")
+            return 1
+
+        updates = {}
+        if name is not None:
+            updates["name"] = name
+        if target_amount is not None:
+            if target_amount <= 0:
+                console.print("[red]Error:[/red] Target amount must be positive")
+                return 1
+            updates["target_amount"] = target_amount
+        if target_date is not None:
+            if target_date < datetime.now(UTC):
+                console.print("[red]Error:[/red] Target date must be in the future")
+                return 1
+            updates["target_date"] = target_date
+        if category is not None:
+            updates["category"] = category
+        if description is not None:
+            updates["description"] = description
+        if status is not None:
+            updates["status"] = GoalStatus(status)
+
+        updated_goal = goal.model_copy(update=updates)
+        storage.update_goal(updated_goal)
+        console.print(f"[green]✓ Updated goal:[/green] {updated_goal.name}")
+        return 0
+    except (StorageError, ValueError) as e:
+        console.print(f"[red]Error:[/red] {str(e)}")
+        return 1
+
+@goals.command(name="delete")
+@click.argument("goal-id")
+def delete_goal(goal_id: str):
+    """Delete a financial goal."""
+    try:
+        if storage.delete_goal(goal_id):
+            console.print("[green]✓ Deleted goal[/green]")
+            return 0
+        console.print("[red]Error:[/red] Goal not found")
+        return 1
+    except StorageError as e:
+        console.print(f"[red]Error:[/red] {str(e)}")
+        return 1
 
 if __name__ == "__main__":
     cli()

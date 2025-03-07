@@ -61,3 +61,37 @@ class Portfolio(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = Field(None, max_length=500)
     creation_date: datetime = Field(default_factory=datetime.utcnow)
+
+
+class GoalStatus(str, Enum):
+    """Status of a financial goal."""
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    ON_HOLD = "on_hold"
+
+
+class Goal(BaseModel):
+    """Financial goal model."""
+    
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "example": {
+                "name": "Emergency Fund",
+                "target_amount": "10000.00",
+                "target_date": "2024-12-31T00:00:00Z",
+                "category": "Savings",
+                "status": "in_progress"
+            }
+        }
+    )
+
+    id: UUID = Field(default_factory=uuid4)
+    name: str = Field(..., min_length=1, max_length=100)
+    target_amount: PositiveFloat
+    target_date: datetime
+    category: Optional[str] = Field(None, max_length=50)
+    description: Optional[str] = Field(None, max_length=500)
+    status: GoalStatus = Field(default=GoalStatus.IN_PROGRESS)
+    creation_date: datetime = Field(default_factory=datetime.utcnow)
+    portfolio_id: Optional[UUID] = None  # Optional link to a portfolio
