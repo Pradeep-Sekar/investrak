@@ -158,16 +158,12 @@ class JsonFileStorage(StorageInterface):
 
     def save_investment(self, investment: InvestmentEntry) -> None:
         """Save an investment entry to storage."""
-        # Verify portfolio exists
-        if not self.get_portfolio(investment.portfolio_id):
-            raise StorageError(f"Portfolio {investment.portfolio_id} not found")
-        
         investments = self._read_investments()
         investments.append(investment.model_dump())
         self._write_investments(investments)
 
     def get_investment(self, investment_id: uuid.UUID) -> Optional[InvestmentEntry]:
-        """Retrieve an investment entry by ID."""
+        """Retrieve an investment by ID."""
         investments = self._read_investments()
         for inv in investments:
             if inv["id"] == str(investment_id):
@@ -187,7 +183,10 @@ class JsonFileStorage(StorageInterface):
         """Delete an investment entry by ID."""
         investments = self._read_investments()
         initial_length = len(investments)
-        investments = [inv for inv in investments if inv["id"] != str(investment_id)]
+        investments = [
+            inv for inv in investments
+            if inv["id"] != str(investment_id)
+        ]
         if len(investments) < initial_length:
             self._write_investments(investments)
             return True

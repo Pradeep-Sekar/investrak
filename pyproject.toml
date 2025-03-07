@@ -14,7 +14,9 @@ dev = [
     "pytest>=7.0.0",
     "black>=23.0.0",
     "isort>=5.0.0",
-    "mypy>=1.0.0"
+    "mypy>=1.0.0",
+    "freezegun>=1.0.0",  # For datetime testing
+    "pytest-cov>=4.0.0"  # For coverage reporting
 ]
 
 [project.scripts]

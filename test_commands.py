@@ -1,0 +1,1 @@
+result = runner.invoke(cli, ["portfolio", "create", "Test Portfolio", "-d", "Test Description"])
