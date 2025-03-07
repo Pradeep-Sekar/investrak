@@ -3,22 +3,22 @@
 ## Phase 1: Portfolio Management Foundation
 ### 1.1 Portfolio Creation and Basic Operations (Current Sprint)
 **Features:**
-- Create new portfolio
-- List existing portfolios
-- Delete portfolio
-- Basic portfolio details (name, description, creation date)
+- Create new portfolio <span style="color:green">(Completed)</span>
+- List existing portfolios <span style="color:green">(Completed)</span>
+- Delete portfolio <span style="color:green">(Completed)</span>
+- Basic portfolio details (name, description, creation date) <span style="color:green">(Completed)</span>
 
 **Success Metrics:**
-- [ ] All CRUD operations working for portfolios
-- [ ] Data persistence implemented
-- [ ] Input validation for all operations
-- [ ] Error handling for common scenarios
+- [x] All CRUD operations working for portfolios <span style="color:green">(Completed)</span>
+- [x] Data persistence implemented <span style="color:green">(Completed)</span>
+- [x] Input validation for all operations <span style="color:green">(Completed)</span>
+- [x] Error handling for common scenarios <span style="color:green">(Completed)</span>
 
 **Testing Criteria:**
-- Unit tests for all portfolio operations
-- Integration tests for data persistence
-- Edge case handling (empty portfolios, invalid inputs)
-- CLI interface tests
+- Unit tests for all portfolio operations <span style="color:green">(Completed)</span>
+- Integration tests for data persistence <span style="color:green">(Completed)</span>
+- Edge case handling (empty portfolios, invalid inputs) <span style="color:green">(Completed)</span>
+- CLI interface tests <span style="color:green">(Completed)</span>
 
 ### 1.2 Investment Entry Management
 **Features:**
