@@ -28,36 +28,36 @@
 - Basic investment categorization <span style="color:green">(Completed)</span>
 
 **Success Metrics:**
-- [x] Successfully add/edit/delete investment entries
-- [x] Data validation for all input fields
-- [x] Proper date handling and formatting
-- [x] Basic categorization system working
+- [ ] Successfully add/edit/delete investment entries
+- [ ] Data validation for all input fields
+- [ ] Proper date handling and formatting
+- [ ] Basic categorization system working
 
 **Testing Criteria:**
-- [x] Unit tests for investment entry operations
-- [x] Validation tests for all input fields
-- [x] Date handling edge cases
-- [x] Category management tests
+- [ ] Unit tests for investment entry operations
+- [ ] Validation tests for all input fields
+- [ ] Date handling edge cases
+- [ ] Category management tests
 
 ## Phase 2: Financial Goals Framework
 ### 2.1 Goal Definition
 **Features:**
-- Create financial goals
-- Set target amounts
-- Set target dates
-- Goal categorization
+- Create financial goals <span style="color:green">(Completed)</span>
+- Set target amounts <span style="color:green">(Completed)</span>
+- Set target dates <span style="color:green">(Completed)</span>
+- Goal categorization <span style="color:green">(Completed)</span>
 
 **Success Metrics:**
-- [ ] Goal creation with all required fields
-- [ ] Target date validation
-- [ ] Progress tracking implementation
-- [ ] Category management
+- [x] Goal creation with all required fields <span style="color:green">(Completed)</span>
+- [x] Target date validation <span style="color:green">(Completed)</span>
+- [x] Progress tracking implementation <span style="color:green">(Completed)</span>
+- [x] Category management <span style="color:green">(Completed)</span>
 
 **Testing Criteria:**
-- Goal creation/editing tests
-- Date validation tests
-- Progress calculation tests
-- Category management tests
+- [ ] Goal creation/editing tests
+- [ ] Date validation tests
+- [ ] Progress calculation tests
+- [ ] Category management tests
 
 ## Phase 3: Analytics and Reporting
 ### 3.1 Basic Portfolio Analytics
