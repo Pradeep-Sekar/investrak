@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from uuid import uuid4
 
-from investrak.core.models import Portfolio
+from investrak.core.models import Portfolio, InvestmentEntry, InvestmentType
 from investrak.core.storage import JsonFileStorage, StorageError
 
 
@@ -78,3 +78,141 @@ def test_invalid_portfolio_operations(temp_storage):
     # Test updating non-existent portfolio
     with pytest.raises(StorageError):
         temp_storage.update_portfolio(Portfolio(name="Non-existent"))
+
+
+def test_save_and_get_investment(temp_storage):
+    """Test saving and retrieving an investment."""
+    # Create a portfolio first
+    portfolio = Portfolio(name="Test Portfolio")
+    temp_storage.save_portfolio(portfolio)
+    
+    # Create and save investment
+    investment = InvestmentEntry(
+        portfolio_id=portfolio.id,
+        symbol="AAPL",
+        type=InvestmentType.STOCK,
+        quantity=10,
+        purchase_price=150.50
+    )
+    temp_storage.save_investment(investment)
+    
+    # Retrieve and verify
+    retrieved = temp_storage.get_investment(investment.id)
+    assert retrieved is not None
+    assert retrieved.symbol == investment.symbol
+    assert retrieved.type == investment.type
+    assert retrieved.quantity == investment.quantity
+    assert retrieved.purchase_price == investment.purchase_price
+
+
+def test_list_investments(temp_storage):
+    """Test listing investments in a portfolio."""
+    portfolio = Portfolio(name="Test Portfolio")
+    temp_storage.save_portfolio(portfolio)
+    
+    investments = [
+        InvestmentEntry(
+            portfolio_id=portfolio.id,
+            symbol="AAPL",
+            type=InvestmentType.STOCK,
+            quantity=10,
+            purchase_price=150.50
+        ),
+        InvestmentEntry(
+            portfolio_id=portfolio.id,
+            symbol="VTI",
+            type=InvestmentType.ETF,
+            quantity=5,
+            purchase_price=220.75
+        )
+    ]
+    
+    for inv in investments:
+        temp_storage.save_investment(inv)
+    
+    retrieved = temp_storage.list_investments(portfolio.id)
+    assert len(retrieved) == 2
+    assert any(inv.symbol == "AAPL" for inv in retrieved)
+    assert any(inv.symbol == "VTI" for inv in retrieved)
+
+
+def test_delete_investment(temp_storage):
+    """Test deleting an investment."""
+    portfolio = Portfolio(name="Test Portfolio")
+    temp_storage.save_portfolio(portfolio)
+    
+    investment = InvestmentEntry(
+        portfolio_id=portfolio.id,
+        symbol="AAPL",
+        type=InvestmentType.STOCK,
+        quantity=10,
+        purchase_price=150.50
+    )
+    temp_storage.save_investment(investment)
+    
+    assert temp_storage.delete_investment(investment.id)
+    assert temp_storage.get_investment(investment.id) is None
+
+
+def test_update_investment(temp_storage):
+    """Test updating an investment."""
+    portfolio = Portfolio(name="Test Portfolio")
+    temp_storage.save_portfolio(portfolio)
+    
+    investment = InvestmentEntry(
+        portfolio_id=portfolio.id,
+        symbol="AAPL",
+        type=InvestmentType.STOCK,
+        quantity=10,
+        purchase_price=150.50
+    )
+    temp_storage.save_investment(investment)
+    
+    updated = InvestmentEntry(
+        id=investment.id,
+        portfolio_id=portfolio.id,
+        symbol="AAPL",
+        type=InvestmentType.STOCK,
+        quantity=20,  # Updated quantity
+        purchase_price=155.75  # Updated price
+    )
+    temp_storage.update_investment(updated)
+    
+    retrieved = temp_storage.get_investment(investment.id)
+    assert retrieved is not None
+    assert retrieved.quantity == 20
+    assert retrieved.purchase_price == 155.75
+
+
+def test_invalid_investment_operations(temp_storage):
+    """Test operations with invalid investments."""
+    portfolio = Portfolio(name="Test Portfolio")
+    temp_storage.save_portfolio(portfolio)
+    
+    # Test saving investment with non-existent portfolio
+    with pytest.raises(StorageError):
+        investment = InvestmentEntry(
+            portfolio_id=uuid4(),
+            symbol="AAPL",
+            type=InvestmentType.STOCK,
+            quantity=10,
+            purchase_price=150.50
+        )
+        temp_storage.save_investment(investment)
+    
+    # Test getting non-existent investment
+    assert temp_storage.get_investment(uuid4()) is None
+    
+    # Test deleting non-existent investment
+    assert not temp_storage.delete_investment(uuid4())
+    
+    # Test updating non-existent investment
+    with pytest.raises(StorageError):
+        investment = InvestmentEntry(
+            portfolio_id=portfolio.id,
+            symbol="AAPL",
+            type=InvestmentType.STOCK,
+            quantity=10,
+            purchase_price=150.50
+        )
+        temp_storage.update_investment(investment)
