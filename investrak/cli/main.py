@@ -4,6 +4,7 @@ from datetime import datetime, UTC
 import click
 from rich.console import Console
 from rich.table import Table
+from uuid import UUID
 
 from investrak.core.models import Portfolio, InvestmentEntry, InvestmentType, Goal, GoalStatus
 from investrak.core.storage import JsonFileStorage, StorageError
@@ -380,6 +381,62 @@ def delete_goal(goal_id: str):
         return 1
     except StorageError as e:
         console.print(f"[red]Error:[/red] {str(e)}")
+        return 1
+
+@cli.group()
+def analytics():
+    """Portfolio analytics and reporting."""
+    pass
+
+@analytics.command(name="value")
+@click.argument("portfolio_id")
+def portfolio_value(portfolio_id: str):
+    """Show current value of a portfolio."""
+    try:
+        portfolio = storage.get_portfolio(UUID(portfolio_id))
+        if not portfolio:
+            console.print("[red]Error:[/red] Portfolio not found")
+            return 1
+
+        from investrak.core.analytics import PortfolioAnalytics
+        analytics = PortfolioAnalytics(storage)
+        value = analytics.calculate_portfolio_value(UUID(portfolio_id))
+        
+        console.print(f"\n[bold]Portfolio:[/bold] {portfolio.name}")
+        console.print(f"[bold]Current Value:[/bold] ${value:,.2f}\n")
+        return 0
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] Invalid portfolio ID")
+        return 1
+
+@analytics.command(name="metrics")
+@click.argument("portfolio_id")
+def portfolio_metrics(portfolio_id: str):
+    """Show detailed portfolio metrics."""
+    try:
+        portfolio = storage.get_portfolio(UUID(portfolio_id))
+        if not portfolio:
+            console.print("[red]Error:[/red] Portfolio not found")
+            return 1
+
+        from investrak.core.analytics import PortfolioAnalytics
+        analytics = PortfolioAnalytics(storage)
+        metrics = analytics.calculate_portfolio_metrics(UUID(portfolio_id))
+        
+        table = Table(title=f"Portfolio Metrics: {portfolio.name}")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", style="green")
+        
+        table.add_row("Total Invested", f"${metrics['total_invested']:,.2f}")
+        table.add_row("Current Value", f"${metrics['current_value']:,.2f}")
+        table.add_row("Profit/Loss", f"${metrics['profit_loss']:,.2f}")
+        table.add_row("Profit/Loss %", f"{metrics['profit_loss_percentage']:.2f}%")
+        table.add_row("Number of Investments", str(metrics['investment_count']))
+        
+        console.print(table)
+        return 0
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] Invalid portfolio ID")
         return 1
 
 if __name__ == "__main__":
