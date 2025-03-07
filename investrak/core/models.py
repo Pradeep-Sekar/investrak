@@ -95,3 +95,27 @@ class Goal(BaseModel):
     status: GoalStatus = Field(default=GoalStatus.IN_PROGRESS)
     creation_date: datetime = Field(default_factory=datetime.utcnow)
     portfolio_id: Optional[UUID] = None  # Optional link to a portfolio
+
+
+class PortfolioSnapshot(BaseModel):
+    """Historical snapshot of portfolio performance."""
+    
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "example": {
+                "portfolio_id": "123e4567-e89b-12d3-a456-426614174000",
+                "timestamp": "2024-01-01T00:00:00Z",
+                "total_value": "10000.00",
+                "cash_balance": "1000.00",
+                "invested_amount": "9000.00"
+            }
+        }
+    )
+
+    id: UUID = Field(default_factory=uuid4)
+    portfolio_id: UUID
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    total_value: Decimal
+    cash_balance: Decimal = Field(default=Decimal('0'))
+    invested_amount: Decimal

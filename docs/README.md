@@ -18,7 +18,8 @@ investrak/
 │   └── core/              # Core business logic
 │       ├── __init__.py
 │       ├── models.py      # Data models (Portfolio, Investment, Goal)
-│       └── storage.py     # Storage implementations
+│       ├── storage.py     # Storage implementations
+│       └── analytics.py   # Portfolio analytics and metrics
 ├── tests/                 # Test suite
 │   ├── __init__.py
 │   ├── conftest.py       # Test configurations
@@ -243,11 +244,54 @@ investrak goals delete <goal-id>
 - Target date must be in the future
 - Status must be one of: in_progress, completed, on_hold
 
+### Portfolio Analytics
+
+The `analytics` command group provides tools for analyzing portfolio performance:
+
+```bash
+# Show current value of a portfolio
+investrak analytics value <portfolio-id>
+
+# Take a snapshot of current portfolio state
+investrak analytics snapshot <portfolio-id>
+
+# Show portfolio performance metrics
+investrak analytics performance <portfolio-id> --from YYYY-MM-DD --to YYYY-MM-DD
+```
+
+#### Command Details
+
+- `value`: Shows the current total value of a portfolio
+  - Required: `portfolio-id`
+  - Displays:
+    - Portfolio name
+    - Current total value
+
+- `snapshot`: Creates a point-in-time snapshot of portfolio value
+  - Required: `portfolio-id`
+  - Records:
+    - Total value
+    - Invested amount
+    - Timestamp
+
+- `performance`: Shows portfolio performance metrics
+  - Required: 
+    - `portfolio-id`
+    - `--from`: Start date (YYYY-MM-DD)
+    - `--to`: End date (YYYY-MM-DD)
+  - Displays:
+    - Total Return ($)
+    - Total Return (%)
+    - Annualized Return
+    - Best Daily Return
+    - Worst Daily Return
+
 ## Available Commands
 - `investrak --help`: Show help message
 - `investrak portfolio`: Manage investment portfolios
 - `investrak investment`: Manage investments
 - `investrak goals`: Track financial goals
+- `investrak analytics`: Analyze portfolio performance
 
 ## Commit Guidelines
 We follow semantic commit messages:

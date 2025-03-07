@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from datetime import datetime
 
-from investrak.core.models import Portfolio, InvestmentEntry, InvestmentType
+from investrak.core.models import Portfolio, InvestmentEntry, InvestmentType, PortfolioSnapshot
 from investrak.core.storage import JsonFileStorage
 from investrak.core.analytics import PortfolioAnalytics
 
@@ -61,3 +61,47 @@ def test_portfolio_metrics(test_portfolio):
     assert metrics["profit_loss"] == Decimal('0')
     assert metrics["profit_loss_percentage"] == Decimal('0')
     assert metrics["investment_count"] == 2
+
+@pytest.mark.freeze_time("2024-01-15")
+def test_portfolio_snapshot(test_portfolio):
+    """Test taking portfolio snapshot."""
+    storage, portfolio = test_portfolio
+    analytics = PortfolioAnalytics(storage)
+    
+    snapshot = analytics.take_portfolio_snapshot(portfolio.id)
+    
+    assert snapshot.portfolio_id == portfolio.id
+    assert snapshot.total_value == Decimal('14000.00')
+    assert snapshot.invested_amount == Decimal('14000.00')
+    assert snapshot.timestamp.date() == datetime(2024, 1, 15).date()
+
+@pytest.mark.freeze_time("2024-01-15")
+def test_performance_metrics(test_portfolio):
+    """Test calculating performance metrics."""
+    storage, portfolio = test_portfolio
+    analytics = PortfolioAnalytics(storage)
+    
+    # Create some historical snapshots
+    snapshots = [
+        PortfolioSnapshot(
+            portfolio_id=portfolio.id,
+            total_value=Decimal('10000.00'),
+            invested_amount=Decimal('10000.00'),
+            timestamp=datetime(2024, 1, 1)
+        ),
+        PortfolioSnapshot(
+            portfolio_id=portfolio.id,
+            total_value=Decimal('14000.00'),
+            invested_amount=Decimal('14000.00'),
+            timestamp=datetime(2024, 1, 15)
+        )
+    ]
+    
+    for snapshot in snapshots:
+        storage.save_portfolio_snapshot(snapshot)
+    
+    metrics = analytics.calculate_performance_metrics(portfolio.id)
+    
+    assert metrics["total_return"] == Decimal('4000.00')
+    assert metrics["total_return_percentage"] == Decimal('40.00')
+    assert metrics["annualized_return"] > Decimal('0')

@@ -1,6 +1,7 @@
 """Main CLI entry point for InvesTrak."""
 from pathlib import Path
 from datetime import datetime, UTC
+from typing import Optional
 import click
 from rich.console import Console
 from rich.table import Table
@@ -8,6 +9,7 @@ from uuid import UUID
 
 from investrak.core.models import Portfolio, InvestmentEntry, InvestmentType, Goal, GoalStatus
 from investrak.core.storage import JsonFileStorage, StorageError
+from investrak.core.analytics import PortfolioAnalytics
 
 console = Console()
 storage = JsonFileStorage(Path.home() / ".investrak")
@@ -434,6 +436,62 @@ def portfolio_metrics(portfolio_id: str):
         table.add_row("Number of Investments", str(metrics['investment_count']))
         
         console.print(table)
+        return 0
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] Invalid portfolio ID")
+        return 1
+
+@analytics.command(name="performance")
+@click.argument("portfolio_id")
+@click.option("--from", "start_date", type=click.DateTime(formats=["%Y-%m-%d"]),
+              help="Start date (YYYY-MM-DD)")
+@click.option("--to", "end_date", type=click.DateTime(formats=["%Y-%m-%d"]),
+              help="End date (YYYY-MM-DD)")
+def portfolio_performance(portfolio_id: str, start_date: Optional[datetime] = None,
+                        end_date: Optional[datetime] = None):
+    """Show portfolio performance metrics."""
+    try:
+        portfolio = storage.get_portfolio(UUID(portfolio_id))
+        if not portfolio:
+            console.print("[red]Error:[/red] Portfolio not found")
+            return 1
+
+        analytics = PortfolioAnalytics(storage)
+        metrics = analytics.calculate_performance_metrics(
+            UUID(portfolio_id), start_date, end_date
+        )
+        
+        table = Table(title=f"Portfolio Performance: {portfolio.name}")
+        table.add_column("Metric", style="cyan")
+        table.add_column("Value", style="green")
+        
+        table.add_row("Total Return", f"${metrics['total_return']:,.2f}")
+        table.add_row("Total Return %", f"{metrics['total_return_percentage']:.2f}%")
+        table.add_row("Annualized Return", f"{metrics['annualized_return']:.2f}%")
+        table.add_row("Best Daily Return", f"{metrics['best_day_return']:.2f}%")
+        table.add_row("Worst Daily Return", f"{metrics['worst_day_return']:.2f}%")
+        
+        console.print(table)
+        return 0
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] Invalid portfolio ID")
+        return 1
+
+@analytics.command(name="snapshot")
+@click.argument("portfolio_id")
+def take_snapshot(portfolio_id: str):
+    """Take a snapshot of current portfolio state."""
+    try:
+        portfolio = storage.get_portfolio(UUID(portfolio_id))
+        if not portfolio:
+            console.print("[red]Error:[/red] Portfolio not found")
+            return 1
+
+        analytics = PortfolioAnalytics(storage)
+        snapshot = analytics.take_portfolio_snapshot(UUID(portfolio_id))
+        storage.save_portfolio_snapshot(snapshot)
+        
+        console.print("[green]✓ Portfolio snapshot saved[/green]")
         return 0
     except ValueError as e:
         console.print(f"[red]Error:[/red] Invalid portfolio ID")

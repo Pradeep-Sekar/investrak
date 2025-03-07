@@ -5,8 +5,9 @@ from typing import List, Optional
 import json
 from datetime import datetime
 import uuid
+from decimal import Decimal
 
-from .models import Portfolio, InvestmentEntry, Goal
+from .models import Portfolio, InvestmentEntry, Goal, PortfolioSnapshot
 
 
 class StorageError(Exception):
@@ -101,6 +102,7 @@ class JsonFileStorage(StorageInterface):
         self.portfolios_file = storage_path / "portfolios.json"
         self.investments_file = storage_path / "investments.json"
         self.goals_file = storage_path / "goals.json"
+        self.snapshots_file = storage_path / "snapshots.json"
         self._init_storage()
 
     def _init_storage(self) -> None:
@@ -112,6 +114,8 @@ class JsonFileStorage(StorageInterface):
             self.investments_file.write_text("[]")
         if not self.goals_file.exists():
             self.goals_file.write_text("[]")
+        if not self.snapshots_file.exists():
+            self.snapshots_file.write_text("[]")
 
     def _read_portfolios(self) -> List[dict]:
         """Read portfolios from JSON file."""
@@ -315,3 +319,49 @@ class JsonFileStorage(StorageInterface):
         
         data = self._load_data()
         return data.get("goals", {})  # Return empty dict if no goals
+
+    def get_portfolio_snapshots(self, portfolio_id: uuid.UUID, 
+                              start_date: Optional[datetime] = None,
+                              end_date: Optional[datetime] = None) -> List[PortfolioSnapshot]:
+        """Retrieve portfolio snapshots within the given date range."""
+        try:
+            snapshots = json.loads(self.snapshots_file.read_text())
+            filtered = []
+            
+            for snap in snapshots:
+                if str(snap['portfolio_id']) != str(portfolio_id):
+                    continue
+                    
+                timestamp = datetime.fromisoformat(snap['timestamp'])
+                if start_date and timestamp < start_date:
+                    continue
+                if end_date and timestamp > end_date:
+                    continue
+                    
+                filtered.append(PortfolioSnapshot(
+                    portfolio_id=uuid.UUID(snap['portfolio_id']),
+                    total_value=Decimal(str(snap['total_value'])),
+                    invested_amount=Decimal(str(snap['invested_amount'])),
+                    timestamp=timestamp
+                ))
+            
+            return filtered
+        except json.JSONDecodeError as e:
+            raise StorageError(f"Failed to read snapshots: {e}")
+
+    def save_portfolio_snapshot(self, snapshot: PortfolioSnapshot) -> None:
+        """Save a portfolio snapshot."""
+        try:
+            snapshots = json.loads(self.snapshots_file.read_text())
+            snapshots.append({
+                'portfolio_id': str(snapshot.portfolio_id),
+                'total_value': str(snapshot.total_value),
+                'invested_amount': str(snapshot.invested_amount),
+                'timestamp': snapshot.timestamp.isoformat()
+            })
+            
+            temp_file = self.snapshots_file.with_suffix('.tmp')
+            temp_file.write_text(json.dumps(snapshots, indent=2))
+            temp_file.replace(self.snapshots_file)
+        except Exception as e:
+            raise StorageError(f"Failed to save snapshot: {e}")
