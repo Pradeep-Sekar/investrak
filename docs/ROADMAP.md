@@ -20,24 +20,24 @@
 - Edge case handling (empty portfolios, invalid inputs) <span style="color:green">(Completed)</span>
 - CLI interface tests <span style="color:green">(Completed)</span>
 
-### 1.2 Investment Entry Management
+### 1.2 Investment Entry Management (In Progress)
 **Features:**
-- Add investment entries (stock/ETF/mutual fund)
-- Record purchase price and quantity
-- Record purchase date
-- Basic investment categorization
+- Add investment entries (stock/ETF/mutual fund) <span style="color:green">(Completed)</span>
+- Record purchase price and quantity <span style="color:green">(Completed)</span>
+- Record purchase date <span style="color:green">(Completed)</span>
+- Basic investment categorization <span style="color:green">(Completed)</span>
 
 **Success Metrics:**
-- [ ] Successfully add/edit/delete investment entries
-- [ ] Data validation for all input fields
-- [ ] Proper date handling and formatting
-- [ ] Basic categorization system working
+- [x] Successfully add/edit/delete investment entries
+- [x] Data validation for all input fields
+- [x] Proper date handling and formatting
+- [x] Basic categorization system working
 
 **Testing Criteria:**
-- Unit tests for investment entry operations
-- Validation tests for all input fields
-- Date handling edge cases
-- Category management tests
+- [x] Unit tests for investment entry operations
+- [x] Validation tests for all input fields
+- [x] Date handling edge cases
+- [x] Category management tests
 
 ## Phase 2: Financial Goals Framework
 ### 2.1 Goal Definition
