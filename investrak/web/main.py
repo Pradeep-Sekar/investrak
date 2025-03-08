@@ -37,6 +37,42 @@ async def home(request: Request):
     except StorageError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/portfolio/create")
+async def create_portfolio_form(request: Request):
+    """Show the create portfolio form."""
+    return templates.TemplateResponse(
+        "create_portfolio.html",
+        {"request": request}
+    )
+
+@app.post("/portfolio/create")
+async def create_portfolio(
+    request: Request,
+    name: str = Form(...),
+    description: Optional[str] = Form(None)
+):
+    """Process the create portfolio form submission."""
+    try:
+        portfolio = Portfolio(
+            name=name,
+            description=description
+        )
+        
+        storage.save_portfolio(portfolio)
+        return RedirectResponse(
+            url=f"/portfolio/{portfolio.id}",
+            status_code=303
+        )
+    except (StorageError, ValueError) as e:
+        return templates.TemplateResponse(
+            "create_portfolio.html",
+            {
+                "request": request,
+                "error": str(e)
+            },
+            status_code=400
+        )
+
 @app.get("/portfolio/{portfolio_id}")
 async def view_portfolio(request: Request, portfolio_id: UUID):
     try:
@@ -301,3 +337,7 @@ async def add_investment(
             },
             status_code=400
         )
+
+# The create portfolio routes have been moved to the top
+# The view portfolio route has been moved after the create routes
+# The rest of the routes remain in the same order

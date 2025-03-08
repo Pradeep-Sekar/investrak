@@ -3,7 +3,10 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<h1>My Portfolios</h1>
+<div class="page-header">
+    <h1>My Portfolios</h1>
+    <a href="/portfolio/create" class="button primary">Create New Portfolio</a>
+</div>
 
 {% if portfolios %}
     <div class="portfolios-grid">
@@ -19,7 +22,9 @@
         {% endfor %}
     </div>
 {% else %}
-    <p>No portfolios found. Create your first portfolio to get started.</p>
-    <a href="#" class="button">Create Portfolio</a>
+    <div class="empty-state">
+        <p>No portfolios found. Create your first portfolio to get started.</p>
+        <a href="/portfolio/create" class="button primary">Create Portfolio</a>
+    </div>
 {% endif %}
 {% endblock %}
