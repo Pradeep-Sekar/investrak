@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ portfolio.name }} - Analytics{% endblock %}
+
+{% block content %}
+<h1>{{ portfolio.name }} - Analytics</h1>
+
+<div class="analytics-container">
+    <section class="metrics-summary">
+        <h2>Current Metrics</h2>
+        <div class="metrics-grid">
+            <div class="metric">
+                <h3>Total Invested</h3>
+                <p>${{ "{:,.2f}".format(metrics['total_invested']) }}</p>
+            </div>
+            <div class="metric">
+                <h3>Current Value</h3>
+                <p>${{ "{:,.2f}".format(metrics['current_value']) }}</p>
+            </div>
+            <div class="metric">
+                <h3>Profit/Loss</h3>
+                <p>${{ "{:,.2f}".format(metrics['profit_loss']) }}</p>
+            </div>
+            <div class="metric">
+                <h3>Return</h3>
+                <p>{{ "{:.2f}%".format(metrics['profit_loss_percentage']) }}</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="performance-metrics">
+        <h2>Performance Metrics</h2>
+        <div class="metrics-grid">
+            <div class="metric">
+                <h3>Total Return</h3>
+                <p>${{ "{:,.2f}".format(performance['total_return']) }}</p>
+            </div>
+            <div class="metric">
+                <h3>Annualized Return</h3>
+                <p>{{ "{:.2f}%".format(performance['annualized_return']) }}</p>
+            </div>
+            <div class="metric">
+                <h3>Best Daily Return</h3>
+                <p>{{ "{:.2f}%".format(performance['best_day_return']) }}</p>
+            </div>
+            <div class="metric">
+                <h3>Worst Daily Return</h3>
+                <p>{{ "{:.2f}%".format(performance['worst_day_return']) }}</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div class="actions">
+    <a href="/portfolio/{{ portfolio.id }}" class="button">Back to Portfolio</a>
+    <a href="#" class="button">Take Snapshot</a>
+</div>
+{% endblock %}

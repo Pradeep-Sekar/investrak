@@ -1,11 +1,11 @@
 """Main CLI entry point for InvesTrak."""
 from pathlib import Path
 from datetime import datetime, UTC
+from uuid import UUID, uuid4
 from typing import Optional
 import click
 from rich.console import Console
 from rich.table import Table
-from uuid import UUID
 
 from investrak.core.models import Portfolio, InvestmentEntry, InvestmentType, Goal, GoalStatus
 from investrak.core.storage import JsonFileStorage, StorageError
@@ -48,7 +48,7 @@ def list_portfolios():
             return
 
         table = Table(show_header=True, header_style="bold magenta")
-        table.add_column("ID")
+        table.add_column("ID", no_wrap=True, min_width=36)  # UUID is 36 characters
         table.add_column("Name")
         table.add_column("Description")
         table.add_column("Created")

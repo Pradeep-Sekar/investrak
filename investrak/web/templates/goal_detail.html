@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ goal.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="page-header">
+        <h1>{{ goal.name }}</h1>
+        <span class="status-badge {{ goal.status.value }}">{{ goal.status.value }}</span>
+    </header>
+
+    <div class="goal-detail-card">
+        <div class="goal-info">
+            <div class="info-row">
+                <span class="label">Target Amount:</span>
+                <span class="value">${{ "{:,.2f}".format(goal.target_amount) }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Target Date:</span>
+                <span class="value">{{ goal.target_date.strftime('%Y-%m-%d') }}</span>
+            </div>
+            {% if goal.category %}
+            <div class="info-row">
+                <span class="label">Category:</span>
+                <span class="value">{{ goal.category }}</span>
+            </div>
+            {% endif %}
+            {% if goal.description %}
+            <div class="info-row">
+                <span class="label">Description:</span>
+                <p class="description">{{ goal.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="/goals" class="button">Back to Goals</a>
+        <a href="/goals/{{ goal.id }}/edit" class="button primary">Edit Goal</a>
+    </div>
+</div>
+{% endblock %}

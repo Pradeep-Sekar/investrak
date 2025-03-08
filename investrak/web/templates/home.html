@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<h1>My Portfolios</h1>
+
+{% if portfolios %}
+    <div class="portfolios-grid">
+        {% for portfolio in portfolios %}
+        <div class="portfolio-card">
+            <h2>{{ portfolio.name }}</h2>
+            <p>Created: {{ portfolio.creation_date.strftime('%Y-%m-%d') }}</p>
+            {% if portfolio.description %}
+            <p>{{ portfolio.description }}</p>
+            {% endif %}
+            <a href="/portfolio/{{ portfolio.id }}" class="button">View Details</a>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No portfolios found. Create your first portfolio to get started.</p>
+    <a href="#" class="button">Create Portfolio</a>
+{% endif %}
+{% endblock %}

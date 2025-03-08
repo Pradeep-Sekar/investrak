@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ portfolio.name }}{% endblock %}
+
+{% block content %}
+<h1>{{ portfolio.name }}</h1>
+
+{% if metrics %}
+<div class="metrics-summary">
+    <div class="metric">
+        <h3>Total Value</h3>
+        <p>${{ "{:,.2f}".format(metrics['current_value']) }}</p>
+    </div>
+    <div class="metric">
+        <h3>Total Invested</h3>
+        <p>${{ "{:,.2f}".format(metrics['total_invested']) }}</p>
+    </div>
+    <div class="metric">
+        <h3>Profit/Loss</h3>
+        <p>${{ "{:,.2f}".format(metrics['profit_loss']) }}</p>
+    </div>
+</div>
+{% endif %}
+
+<h2>Investments</h2>
+{% if investments %}
+    <table class="investments-table">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Type</th>
+                <th>Quantity</th>
+                <th>Purchase Price</th>
+                <th>Purchase Date</th>
+                <th>Category</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for investment in investments %}
+            <tr>
+                <td>{{ investment.symbol }}</td>
+                <td>{{ investment.type }}</td>
+                <td>{{ investment.quantity }}</td>
+                <td>${{ "{:,.2f}".format(investment.purchase_price) }}</td>
+                <td>{{ investment.purchase_date.strftime('%Y-%m-%d') }}</td>
+                <td>{{ investment.category or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No investments found in this portfolio.</p>
+{% endif %}
+
+<div class="actions">
+    <a href="/" class="button">Back to Portfolios</a>
+</div>
+{% endblock %}

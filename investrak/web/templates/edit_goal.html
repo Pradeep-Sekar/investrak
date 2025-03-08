@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ goal.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="page-header">
+        <h1>Edit Goal</h1>
+    </header>
+
+    {% if error %}
+    <div class="error-message">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" class="form-card">
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" value="{{ goal.name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="target_amount">Target Amount ($)</label>
+            <input type="number" id="target_amount" name="target_amount" 
+                   value="{{ goal.target_amount }}" step="0.01" min="0" required>
+        </div>
+
+        <div class="form-group">
+            <label for="target_date">Target Date</label>
+            <input type="date" id="target_date" name="target_date" 
+                   value="{{ goal.target_date.strftime('%Y-%m-%d') }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="category">Category</label>
+            <input type="text" id="category" name="category" 
+                   value="{{ goal.category or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="4">{{ goal.description or '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" required>
+                <option value="in_progress" {% if goal.status.value == 'in_progress' %}selected{% endif %}>In Progress</option>
+                <option value="completed" {% if goal.status.value == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="on_hold" {% if goal.status.value == 'on_hold' %}selected{% endif %}>On Hold</option>
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <a href="/goals/{{ goal.id }}" class="button">Cancel</a>
+            <button type="submit" class="button primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

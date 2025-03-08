@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Financial Goals{% endblock %}
+
+{% block content %}
+<div class="container">
+    <header class="page-header">
+        <h1>Financial Goals</h1>
+        <div class="actions">
+            <a href="/goals/create" class="button primary">Create New Goal</a>
+        </div>
+    </header>
+
+    {% if goals %}
+        <div class="goals-grid">
+            {% for goal in goals %}
+            <div class="goal-card">
+                <div class="goal-header">
+                    <h2>{{ goal.name }}</h2>
+                    <span class="status-badge {{ goal.status.value }}">{{ goal.status.value }}</span>
+                </div>
+                <div class="goal-details">
+                    <div class="goal-amount">
+                        <span class="label">Target:</span>
+                        <span class="value">${{ "{:,.2f}".format(goal.target_amount) }}</span>
+                    </div>
+                    <div class="goal-date">
+                        <span class="label">Due:</span>
+                        <span class="value">{{ goal.target_date.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                    {% if goal.category %}
+                    <div class="goal-category">
+                        <span class="label">Category:</span>
+                        <span class="value">{{ goal.category }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="goal-actions">
+                    <a href="/goals/{{ goal.id }}" class="button">View Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No goals created yet. Click "Create New Goal" to get started!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

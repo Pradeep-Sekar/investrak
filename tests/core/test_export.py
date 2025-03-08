@@ -7,7 +7,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from fpdf2 import FPDF
+from fpdf import FPDF
 
 from investrak.core.export import PortfolioExporter
 from investrak.core.models import Portfolio, InvestmentEntry, InvestmentType

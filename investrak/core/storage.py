@@ -5,6 +5,7 @@ from typing import List, Optional
 import json
 from datetime import datetime
 import uuid
+from uuid import UUID
 from decimal import Decimal
 
 from .models import Portfolio, InvestmentEntry, Goal, PortfolioSnapshot
@@ -99,11 +100,15 @@ class JsonFileStorage(StorageInterface):
 
     def __init__(self, storage_path: Path):
         self.storage_path = storage_path
+        self.storage_path.mkdir(parents=True, exist_ok=True)
         self.portfolios_file = storage_path / "portfolios.json"
         self.investments_file = storage_path / "investments.json"
         self.goals_file = storage_path / "goals.json"
         self.snapshots_file = storage_path / "snapshots.json"
-        self._init_storage()
+        
+        # Initialize empty files if they don't exist
+        if not self.goals_file.exists():
+            self._write_goals([])
 
     def _init_storage(self) -> None:
         """Initialize storage directory and files."""
@@ -155,10 +160,10 @@ class JsonFileStorage(StorageInterface):
         portfolios.append(portfolio.model_dump())
         self._write_portfolios(portfolios)
 
-    def get_portfolio(self, portfolio_id: uuid.UUID) -> Optional[Portfolio]:
-        """Retrieve a portfolio by ID."""
+    def get_portfolio(self, portfolio_id: str | UUID) -> Optional[Portfolio]:
+        """Get a portfolio by ID."""
         portfolios = self._read_portfolios()
-        for p in portfolios:
+        for p in portfolios:  # portfolios is a list, not a dict
             if p["id"] == str(portfolio_id):
                 return Portfolio.model_validate(p)
         return None
@@ -235,19 +240,29 @@ class JsonFileStorage(StorageInterface):
         raise StorageError(f"Investment {investment.id} not found")
 
     def save_goal(self, goal: Goal) -> None:
-        """Save or update a goal."""
-        data = self._load_data()
-        if "goals" not in data:
-            data["goals"] = {}
-        data["goals"][str(goal.id)] = goal.model_dump()
-        self._save_data(data)
-
-    def get_goal(self, goal_id: uuid.UUID) -> Optional[Goal]:
-        """Retrieve a goal by ID."""
+        """Save a goal."""
         goals = self._read_goals()
-        for g in goals:
-            if g["id"] == str(goal_id):
-                return Goal.model_validate(g)
+        
+        # Update existing goal or append new one
+        updated = False
+        for i, g in enumerate(goals):
+            if g["id"] == str(goal.id):
+                goals[i] = goal.model_dump()
+                updated = True
+                break
+        
+        if not updated:
+            goals.append(goal.model_dump())
+        
+        self._write_goals(goals)
+
+    def get_goal(self, goal_id: UUID | str) -> Optional[Goal]:
+        """Get a goal by ID."""
+        goals = self._read_goals()
+        goal_id_str = str(goal_id)
+        for goal in goals:
+            if goal["id"] == goal_id_str:
+                return Goal.model_validate(goal)
         return None
 
     def list_goals(self) -> List[Goal]:
@@ -255,7 +270,7 @@ class JsonFileStorage(StorageInterface):
         goals = self._read_goals()
         return [Goal.model_validate(g) for g in goals]
 
-    def delete_goal(self, goal_id: uuid.UUID) -> bool:
+    def delete_goal(self, goal_id: UUID | str) -> bool:
         """Delete a goal by ID."""
         goals = self._read_goals()
         initial_length = len(goals)
@@ -267,33 +282,24 @@ class JsonFileStorage(StorageInterface):
 
     def update_goal(self, goal: Goal) -> None:
         """Update an existing goal."""
-        data = self._load_data()
-        if "goals" not in data:
-            raise StorageError("Goal not found")
-        if str(goal.id) not in data["goals"]:
-            raise StorageError("Goal not found")
-        data["goals"][str(goal.id)] = goal.model_dump()
-        self._save_data(data)
-
-    def delete_goal(self, goal_id: str) -> None:
-        """Delete a goal."""
-        data = self._load_data()
-        if "goals" not in data or str(goal_id) not in data["goals"]:
-            raise StorageError("Goal not found")
-        del data["goals"][str(goal_id)]
-        self._save_data(data)
-
-    def get_goal(self, goal_id: str) -> Goal | None:
-        """Get a goal by ID."""
-        goals = self._load_goals()
-        goal_data = goals.get(str(goal_id))
-        return Goal.model_validate(goal_data) if goal_data else None
+        goals = self._read_goals()
+        goal_id_str = str(goal.id)
+        
+        for i, g in enumerate(goals):
+            if g["id"] == goal_id_str:
+                goals[i] = goal.model_dump()
+                self._write_goals(goals)
+                return
+                
+        raise StorageError("Goal not found")
 
     def _read_goals(self) -> List[dict]:
         """Read goals from JSON file."""
         try:
+            if not self.goals_file.exists():
+                return []
             return json.loads(self.goals_file.read_text())
-        except Exception as e:
+        except json.JSONDecodeError as e:
             raise StorageError(f"Failed to read goals: {e}")
 
     def _write_goals(self, goals: List[dict]) -> None:
@@ -304,21 +310,6 @@ class JsonFileStorage(StorageInterface):
             temp_file.replace(self.goals_file)
         except Exception as e:
             raise StorageError(f"Failed to write goals: {e}")
-
-    def _save_goals(self, goals: dict) -> None:
-        """Save goals to storage."""
-        goals_file = self.storage_path / "goals.json"
-        goals_file.parent.mkdir(parents=True, exist_ok=True)
-        with goals_file.open("w") as f:
-            json.dump(goals, f, default=str)
-
-    def _load_goals(self) -> dict:
-        """Load goals from storage."""
-        if not self.storage_path.exists():
-            return {}
-        
-        data = self._load_data()
-        return data.get("goals", {})  # Return empty dict if no goals
 
     def get_portfolio_snapshots(self, portfolio_id: uuid.UUID, 
                               start_date: Optional[datetime] = None,
@@ -365,3 +356,32 @@ class JsonFileStorage(StorageInterface):
             temp_file.replace(self.snapshots_file)
         except Exception as e:
             raise StorageError(f"Failed to save snapshot: {e}")
+
+    def _load_data(self) -> dict:
+        """Load all data from storage."""
+        if not self.storage_path.exists():
+            return {"portfolios": [], "investments": [], "goals": [], "snapshots": []}
+        
+        data = {
+            "portfolios": self._read_portfolios(),
+            "investments": self._read_investments(),
+            "goals": self._read_goals(),
+            "snapshots": json.loads(self.snapshots_file.read_text()) if self.snapshots_file.exists() else []
+        }
+        return data
+
+    def _save_data(self, data: dict) -> None:
+        """Save all data to storage."""
+        self.storage_path.mkdir(parents=True, exist_ok=True)
+        
+        # Save each data type to its respective file
+        if "portfolios" in data:
+            self._write_portfolios(data["portfolios"])
+        if "investments" in data:
+            self._write_investments(data["investments"])
+        if "goals" in data:
+            self._write_goals(data["goals"])
+        if "snapshots" in data:
+            temp_file = self.snapshots_file.with_suffix('.tmp')
+            temp_file.write_text(json.dumps(data["snapshots"], default=str, indent=2))
+            temp_file.replace(self.snapshots_file)
