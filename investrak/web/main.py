@@ -9,7 +9,7 @@ from typing import Optional
 from datetime import datetime, UTC
 
 from investrak.core.storage import JsonFileStorage, StorageError
-from investrak.core.models import Portfolio, Goal
+from investrak.core.models import Portfolio, Goal, InvestmentEntry, InvestmentType
 from investrak.core.analytics import PortfolioAnalytics
 
 app = FastAPI(title="InvesTrak")
@@ -229,3 +229,75 @@ async def portfolio_analytics(
         )
     except StorageError as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/portfolio/{portfolio_id}/add-investment")
+async def add_investment_form(request: Request, portfolio_id: UUID):
+    """Show the add investment form."""
+    try:
+        portfolio = storage.get_portfolio(portfolio_id)
+        if not portfolio:
+            raise HTTPException(status_code=404, detail="Portfolio not found")
+        return templates.TemplateResponse(
+            "add_investment.html",
+            {"request": request, "portfolio": portfolio}
+        )
+    except StorageError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/portfolio/{portfolio_id}/add-investment")
+async def add_investment(
+    request: Request,
+    portfolio_id: UUID,
+    symbol: str = Form(...),
+    type: str = Form(...),
+    quantity: int = Form(...),
+    purchase_price: float = Form(...),
+    purchase_date: str = Form(...),
+    category: Optional[str] = Form(None),
+    notes: Optional[str] = Form(None)
+):
+    """Process the add investment form submission."""
+    try:
+        portfolio = storage.get_portfolio(portfolio_id)
+        if not portfolio:
+            raise HTTPException(status_code=404, detail="Portfolio not found")
+
+        # Validate inputs
+        if quantity <= 0:
+            raise ValueError("Quantity must be positive")
+        if purchase_price <= 0:
+            raise ValueError("Purchase price must be positive")
+        if len(symbol) > 10:
+            raise ValueError("Symbol too long")
+
+        # Convert purchase_date string to datetime
+        purchase_date = datetime.strptime(purchase_date, "%Y-%m-%d")
+        purchase_date = purchase_date.replace(tzinfo=UTC)
+
+        # Create new investment
+        investment = InvestmentEntry(
+            portfolio_id=portfolio_id,
+            symbol=symbol.upper(),
+            type=InvestmentType(type),
+            quantity=quantity,
+            purchase_price=purchase_price,
+            purchase_date=purchase_date,
+            category=category,
+            notes=notes
+        )
+        
+        storage.save_investment(investment)
+        return RedirectResponse(
+            url=f"/portfolio/{portfolio_id}",
+            status_code=303
+        )
+    except (StorageError, ValueError) as e:
+        return templates.TemplateResponse(
+            "add_investment.html",
+            {
+                "request": request,
+                "portfolio": portfolio,
+                "error": str(e)
+            },
+            status_code=400
+        )

@@ -22,8 +22,10 @@
 </div>
 {% endif %}
 
-<h2>Investments</h2>
-{% if investments %}
+<div class="investments-section">
+    <h2>Investments</h2>
+    
+    {% if investments %}
     <table class="investments-table">
         <thead>
             <tr>
@@ -33,26 +35,30 @@
                 <th>Purchase Price</th>
                 <th>Purchase Date</th>
                 <th>Category</th>
+                <th>Notes</th>
             </tr>
         </thead>
         <tbody>
             {% for investment in investments %}
             <tr>
                 <td>{{ investment.symbol }}</td>
-                <td>{{ investment.type }}</td>
+                <td>{{ investment.type.value }}</td>
                 <td>{{ investment.quantity }}</td>
-                <td>${{ "{:,.2f}".format(investment.purchase_price) }}</td>
+                <td>${{ "%.2f"|format(investment.purchase_price) }}</td>
                 <td>{{ investment.purchase_date.strftime('%Y-%m-%d') }}</td>
                 <td>{{ investment.category or '-' }}</td>
+                <td>{{ investment.notes or '-' }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-{% else %}
-    <p>No investments found in this portfolio.</p>
-{% endif %}
+    {% else %}
+    <p class="no-investments">No investments found. Add your first investment using the button above.</p>
+    {% endif %}
+</div>
 
 <div class="actions">
     <a href="/" class="button">Back to Portfolios</a>
+    <a href="/portfolio/{{ portfolio.id }}/add-investment" class="btn btn-primary">Add Investment</a>
 </div>
 {% endblock %}
